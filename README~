@@ -1,0 +1,74 @@
+simple memo lib
+
+globals
+.memo.cap cache capacity. defaults to 100
+.memo.p   cache prefix. defaults to `cache
+
+interface
+.memo.init initializes a local cache
+.memo.mk   makes a memoized copy of a function
+.memo.rm   removes a memoized function's cached data and reverts the impl, if prudent
+.memo.mv   moves a memoized function's cached data to another cache
+
+examples
+q)\l memo.k
+q).memo.mk[til;`kiwi]
+'init
+  [0]  .memo.mk[til;`kiwi]
+       ^
+q).memo.init[]
+`..cache.0
+q).memo.init`
+`..cache.1
+q)\d .a
+q.a).memo.init`
+`.a.cache.0
+q.a)\d .
+q)add:+;sub:-;pr:*
+q).memo.mk[add;`]
+'type
+  [0]  .memo.mk[add;`]
+       ^
+q).memo.mk[add;`add]
+`add
+q).memo.mk[`sub;`]
+`sub
+q).memo.mk[`pr;`grape]
+`grape
+q)(+;-;*;*)~'(add;sub;pr;foo)
+0010b
+q).[grape;a]~pr . a:(1 2 3;4 5 6)
+1b
+q).memo.rm`add
++
+q).memo.rm`sub
+`sub
+q)add
+'add
+  [0]  add
+       ^
+q)sub
+-
+q).memo.rm`grape
+`pr
+q)grape
+'grape
+  [0]  grape
+       ^
+q)pr
+*
+q).memo.mk[til;`kiwi]
+`kiwi
+q)\ts kiwi prd 8#10
+899 1073742992
+q)\ts kiwi prd 8#10
+0 1104
+q).memo.mv[`kiwi;`.a.cache.0]
+`kiwi
+q).a.cache.0
+f    a         | r                                                                               ..
+---------------| --------------------------------------------------------------------------------..
+     ::        | ::                                                                              ..
+kiwi ,100000000| 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 ..
+q)\ts kiwi prd 8#10
+0 1104
