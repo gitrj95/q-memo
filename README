@@ -1,10 +1,13 @@
 simple memo lib
 
 motivation
-- intermediate steps in parse trees (e.g. API) evaluated inside a canonical HDB were often
-  repeated, and the space was worth the speed
-- certain algorithms were much simpler to impl recursively (without the use of scan or over), but
-  they required memo lookup to be reasonably efficient
+- functions that are expensive to compute, call repeatedly, and produce a small result should lookup
+  against a cache table, i.e. memoized
+- e.g. intermediate steps in parse trees evaluated inside a canonical HDB are often repeated,
+  expensive to compute, and produce small results
+- e.g. certain algorithms are much simpler to impl recursively (without scan or over), but they
+  require memo lookup to be reasonably efficient
+- the process of memoizing a function should be agnostic to the function, undoable, and configurable
 
 interface
 .memo.C        cache capacity. defaults to 100h. can be any short
@@ -38,7 +41,7 @@ q)\d .a
 q).memo.initsize 2h
 `.a.cache.0
 
-q)/ ` may be used to reference \d
+q)/ (::) or ` may be used to reference \d
 q).memo.initns`
 `.a.cache.1
 
