@@ -1,29 +1,36 @@
-simple memo lib
+#+TITLE:q-memo: a simple memo lib
+#+AUTHOR:rj
 
-motivation
+* motivation
 - functions that are expensive to compute, call repeatedly, and produce a small result should lookup
-  against a cache table, i.e. memoized
-- e.g. intermediate steps in parse trees evaluated inside a canonical HDB are often repeated,
-  expensive to compute, and produce small results
-- e.g. certain algorithms are much simpler to impl recursively (without scan or over), but they
-  require memo lookup to be reasonably efficient
+  against a cache table, /i.e./ memoized
+  - /e.g./ intermediate steps in parse trees evaluated inside a canonical HDB are often repeated,
+    expensive to compute, and produce small results
+  - /e.g./ certain algorithms are much simpler to impl recursively (without =scan= or =over=), but
+    they require memo lookup to be reasonably efficient
 - the process of memoizing a function should be agnostic to the function, undoable, and configurable
 
-interface
-.memo.C        cache capacity. defaults to 100h. can be any short
-.memo.P        cache table parent structure name. defaults to `cache. can be any symbol
+* interface
+** configuration
+| name    | description                                                                |
+|---------+----------------------------------------------------------------------------|
+| .memo.C | cache capacity. defaults to =100h=. can be any short                       |
+| .memo.P | cache table parent structure name. defaults to =`cache=. can be any symbol |
+** functions
+| name           | description                                                                  |
+|----------------+------------------------------------------------------------------------------|
+| .memo.init     | initializes a cache table given a namespace and size                         |
+| .memo.initns   | initializes a cache table given a namespace                                  |
+| .memo.initsize | initializes a cache table given a size                                       |
+| .memo.mk       | makes a memoized copy of a function given a source, target, and cache table  |
+| .memo.mkmut    | mutates a given function into its memoized copy given a source               |
+| .memo.mknew    | makes a memoized copy of a function given a source and target                |
+| .memo.rm       | removes a memoized function and clears its cached data given a source        |
+| .memo.rs       | resizes a cache table given a cache name and size                            |
+| .memo.mv       | moves a memoized function to a new cache table given a source and cache name |
 
-.memo.init     initializes a cache table given a namespace and size
-.memo.initns   initializes a cache table given a namespace
-.memo.initsize initializes a cache table given a size
-.memo.mk       makes a memoized copy of a function given a source, target, and cache table
-.memo.mkmut    mutates a given function into its memoized copy given a source
-.memo.mknew    makes a memoized copy of a function given a source and target
-.memo.rm       removes a memoized function and clears its cached data given a source
-.memo.rs       resizes a cache table given a cache name and size
-.memo.mv       moves a memoized function to a new cache table given a source and cache name
-
-examples
+* examples
+#+BEGIN_EXAMPLE
 q)/ .memo.init takes a [namespace;<short>]
 q).memo.init[`.;2h]
 `..cache.0
@@ -44,7 +51,9 @@ q).memo.initsize 2h
 q)/ (::) or ` may be used to reference \d
 q).memo.initns`
 `.a.cache.1
+#+END_EXAMPLE
 
+#+BEGIN_EXAMPLE
 q)/ .memo.mk takes a [function;<symbol>;<symbol>]
 q)f:sum;.memo.mk[`f;`g;`cache.0]
 `.a.g
@@ -77,7 +86,9 @@ q).memo.mk[min;`f1;`cache.1]
 q)/ a null second argument will use the same name as the first, like .memo.mkmut
 q)f2:max;.memo.mk[`f2;`;`cache.0]
 `.a.f2
+#+END_EXAMPLE
 
+#+BEGIN_EXAMPLE
 q)/ removing a memoized function that was made in place reverts the impl
 q).memo.rm`h
 `.a.h
@@ -101,7 +112,9 @@ q)cache.0
 f a | r 
 ----| --
   ::| ::
+#+END_EXAMPLE
 
+#+BEGIN_EXAMPLE
 q)/ .memo.rs takes a [cache;<short>]
 q).memo.rs[`cache.1;2h]
 `.a.cache.1
@@ -120,7 +133,9 @@ f     a     | r
 ------------| --
       ::    | ::
 .a.j1 ,2 3 4| 24
+#+END_EXAMPLE
 
+#+BEGIN_EXAMPLE
 q)/ .memo.mv takes a [<symbol>;<symbol>] as its function and cache table, respectively
 q).memo.mv[`j1;`..cache.0]
 `.a.j1
@@ -144,8 +159,10 @@ f     a     | r
       ::    | :: 
 .a.j1 ,2 3 4| 24 
 .a.j1 ,5 6 7| 210
+#+END_EXAMPLE
 
-pitfalls
+* pitfalls
+#+BEGIN_EXAMPLE
 q)/ if passed as a literal, its new name can't be null
 q).memo.mknew[sums;`]
 'null
@@ -155,3 +172,4 @@ q)cache:10
 q)/ all memoized functions that point here will no longer work
 q).a.j1 10 11
 '0
+#+END_EXAMPLE
