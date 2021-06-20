@@ -4,7 +4,7 @@
 * motivation
 - functions that are expensive to compute, call repeatedly, and produce small results should
   be memoized; /i.e./ check if the args were seen before, and if they were, fetch the result, and
-  if not, compute the result and cache it for future lookups.
+  if not, compute the result and cache it for future lookups
   - /e.g./ intermediate steps in parse trees evaluated inside a canonical HDB are often repeated,
     expensive to compute, and produce small results
   - /e.g./ certain algorithms are much simpler to impl recursively (without =scan= or =over=), but
