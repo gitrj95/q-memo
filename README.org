@@ -1,9 +1,10 @@
-#+TITLE:q-memo: a simple memo lib
-#+AUTHOR:rj
+#+title:q-memo: a simple memo lib
+#+author:rj
 
 * motivation
-- functions that are expensive to compute, call repeatedly, and produce a small result should lookup
-  against a cache table, /i.e./ memoized
+- functions that are expensive to compute, call repeatedly, and produce small results should
+  be memoized; /i.e./ check if the args were seen before, and if they were, fetch the result, and
+  if not, compute the result and cache it for future lookups.
   - /e.g./ intermediate steps in parse trees evaluated inside a canonical HDB are often repeated,
     expensive to compute, and produce small results
   - /e.g./ certain algorithms are much simpler to impl recursively (without =scan= or =over=), but
@@ -63,6 +64,15 @@ q)g 1 2 3
 6
 q)g 4 5 6
 15
+q)/ since 1 2 3 and 4 5 6 are new args, `g computes them and caches the results in `.a.cache.0
+q)cache.0
+f    a     | r 
+-----------| --
+     ::    | ::
+.a.g ,1 2 3| 6 
+.a.g ,4 5 6| 15
+q)/ subsequent invocations with recognized args will fetch from here--instead of executing the underlying impl
+q)g 4 5 6
 q)cache.0
 f    a     | r 
 -----------| --
@@ -172,4 +182,7 @@ q)cache:10
 q)/ all memoized functions that point here will no longer work
 q).a.j1 10 11
 '0
+
+q)/ don't memoize stateful functions
+q).memo.mknew[rand;`why]
 #+END_EXAMPLE
