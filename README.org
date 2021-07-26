@@ -1,20 +1,21 @@
-#+title:q-memo: a simple memo lib
+#+title:q-memo
 #+author:rj
 
 * motivation
-- functions that are expensive to compute, call repeatedly, and produce small results should
-  be memoized; /i.e./ check if the args were seen before, and if they were, fetch the result, and
-  if not, compute the result and cache it for future lookups
-  - /e.g./ intermediate steps in parse trees evaluated inside a canonical HDB are often repeated,
-    expensive to compute, and produce small results
-  - /e.g./ certain algorithms are much simpler to impl recursively (without =scan= or =over=), but
-    they require memo lookup to be reasonably efficient
-- the process of memoizing a function should be agnostic to the function, undoable, and configurable
+- pure functions that are expensive to compute, call repeatedly, and produce
+  relatively small results should be memoized; /i.e./ check if the arguments were
+  seen before, and if they were, fetch the result, and if not, compute the result
+  and cache it for future lookups
+  - /e.g./ query steps against an hdb
+  - /e.g./ algorithms whose implementation lends naturally to recursive memoization
+    as a substitute for dynamic programming
+- the process of memoizing a function should be agnostic to the function,
+  undoable, configurable, and easy
 
 * interface
 ** configuration
-| name    | description                                                                |
-|---------+----------------------------------------------------------------------------|
+| name    | description                                                              |
+|---------+--------------------------------------------------------------------------|
 | .memo.C | cache capacity. defaults to =100h=. can be any short                       |
 | .memo.P | cache table parent structure name. defaults to =`cache=. can be any symbol |
 ** functions
@@ -40,7 +41,7 @@ q)cache
  | ::
 0| (+`f`a!(,`;,::))!+(,`r)!,,::
 
-q)/ .memo.initns is shorthand for .memo.init, using C as the cache size
+q)/ .memo.initns is shorthand for .memo.init, using .memo.C as the cache size
 q).memo.initns[]
 `..cache.1
 
@@ -64,14 +65,16 @@ q)g 1 2 3
 6
 q)g 4 5 6
 15
-q)/ since 1 2 3 and 4 5 6 are new args, `g computes them and caches the results in `.a.cache.0
+q)/ since 1 2 3 and 4 5 6 are new args, `g computes them and caches the results
+q)/ in `.a.cache.0
 q)cache.0
 f    a     | r 
 -----------| --
      ::    | ::
 .a.g ,1 2 3| 6 
 .a.g ,4 5 6| 15
-q)/ subsequent invocations with recognized args will fetch from here--instead of executing the underlying impl
+q)/ subsequent invocations with recognized arguments will fetch from
+q)/ here--instead of executing the underlying implementation
 q)g 4 5 6
 q)cache.0
 f    a     | r 
@@ -80,8 +83,8 @@ f    a     | r
 .a.g ,1 2 3| 6 
 .a.g ,4 5 6| 15
 
-q)/ .memo.mkmut is shorthand for .memo.mk, mutating the function in place and using the most recent
-q)/ cache table
+q)/ .memo.mkmut is shorthand for .memo.mk, mutating the function in place and
+q)/ using the most recent cache table
 q)h:div;.memo.mkmut`h
 `.a.h
 
@@ -99,7 +102,8 @@ q)f2:max;.memo.mk[`f2;`;`cache.0]
 #+END_EXAMPLE
 
 #+BEGIN_EXAMPLE
-q)/ removing a memoized function that was made in place reverts the impl
+q)/ removing a memoized function that was made in place reverts the
+q)/ implementation
 q).memo.rm`h
 `.a.h
 q)h
@@ -146,7 +150,8 @@ f     a     | r
 #+END_EXAMPLE
 
 #+BEGIN_EXAMPLE
-q)/ .memo.mv takes a [<symbol>;<symbol>] as its function and cache table, respectively
+q)/ .memo.mv takes a [<symbol>;<symbol>] as its function and cache table,
+q)/ respectively
 q).memo.mv[`j1;`..cache.0]
 `.a.j1
 q)/ its cached data has moved
