@@ -3,11 +3,11 @@
 
 * motivation
 - pure functions that are expensive to compute, call repeatedly, and produce
-  relatively small results should be memoized; /i.e./ check if the arguments were
+  relatively small results should be memoized; ie check if the arguments were
   seen before, and if they were, fetch the result, and if not, compute the result
   and cache it for future lookups
-  - /e.g./ query steps against an hdb
-  - /e.g./ algorithms whose implementation lends naturally to recursive memoization
+  - eg query steps against an hdb
+  - eg algorithms whose implementation lends naturally to recursive memoization
     as a substitute for dynamic programming
 - the process of memoizing a function should be agnostic to the function,
   undoable, configurable, and easy
@@ -32,7 +32,7 @@
 | .memo.mv       | moves a memoized function to a new cache table given a source and cache name |
 
 * examples
-#+BEGIN_EXAMPLE
+#+begin_example
 q)/ .memo.init takes a [namespace;<short>]
 q).memo.init[`.;2h]
 `..cache.0
@@ -53,10 +53,10 @@ q).memo.initsize 2h
 q)/ (::) or ` may be used to reference \d
 q).memo.initns`
 `.a.cache.1
-#+END_EXAMPLE
+#+end_example
 
-#+BEGIN_EXAMPLE
-q)/ .memo.mk takes a [function;<symbol>;<symbol>]
+#+begin_example
+q)/ .memo.mk takes a [<function>;<symbol>;<symbol>]
 q)f:sum;.memo.mk[`f;`g;`cache.0]
 `.a.g
 
@@ -99,9 +99,9 @@ q).memo.mk[min;`f1;`cache.1]
 q)/ a null second argument will use the same name as the first, like .memo.mkmut
 q)f2:max;.memo.mk[`f2;`;`cache.0]
 `.a.f2
-#+END_EXAMPLE
+#+end_example
 
-#+BEGIN_EXAMPLE
+#+begin_example
 q)/ removing a memoized function that was made in place reverts the
 q)/ implementation
 q).memo.rm`h
@@ -126,9 +126,9 @@ q)cache.0
 f a | r 
 ----| --
   ::| ::
-#+END_EXAMPLE
+#+end_example
 
-#+BEGIN_EXAMPLE
+#+begin_example
 q)/ .memo.rs takes a [cache;<short>]
 q).memo.rs[`cache.1;2h]
 `.a.cache.1
@@ -147,9 +147,9 @@ f     a     | r
 ------------| --
       ::    | ::
 .a.j1 ,2 3 4| 24
-#+END_EXAMPLE
+#+end_example
 
-#+BEGIN_EXAMPLE
+#+begin_example
 q)/ .memo.mv takes a [<symbol>;<symbol>] as its function and cache table,
 q)/ respectively
 q).memo.mv[`j1;`..cache.0]
@@ -174,10 +174,10 @@ f     a     | r
       ::    | :: 
 .a.j1 ,2 3 4| 24 
 .a.j1 ,5 6 7| 210
-#+END_EXAMPLE
+#+end_example
 
 * pitfalls
-#+BEGIN_EXAMPLE
+#+begin_example
 q)/ if passed as a literal, its new name can't be null
 q).memo.mknew[sums;`]
 'null
@@ -190,4 +190,4 @@ q).a.j1 10 11
 
 q)/ don't memoize stateful functions
 q).memo.mknew[rand;`why]
-#+END_EXAMPLE
+#+end_example

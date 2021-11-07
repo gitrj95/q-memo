@@ -13,3 +13,4 @@ mv:{if[~(fy:fn y)in,/ac;'`type];f0:df fn x;.[fy;();,;sc . f0 1 3];tc fy;ec . f0 
 
 initns:init[;::];initsize:init[::]
 mkmut:mk[;::;::];mknew:mk[;;::]
+
