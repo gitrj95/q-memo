@@ -11,6 +11,7 @@
     as a substitute for dynamic programming
 - the process of memoizing a function should be agnostic to the function,
   undoable, configurable, and easy
+- lru semantics for cache eviction
 
 * interface
 ** configuration
@@ -30,7 +31,6 @@
 | .memo.rm       | removes a memoized function and clears its cached data given a source        |
 | .memo.rs       | resizes a cache table given a cache name and size                            |
 | .memo.mv       | moves a memoized function to a new cache table given a source and cache name |
-
 * examples
 #+begin_example
 q)/ .memo.init takes a [namespace;<short>]
@@ -176,6 +176,23 @@ f     a     | r
 .a.j1 ,5 6 7| 210
 #+end_example
 
+#+begin_example
+q)/ the principal reason why .memo operates via indirection is to allow named
+q)/ functions within lexical scope to magically use dynamic programming.
+q)/ a stupid implementation for computing the nth fibonacci number follows
+q)dumb:{$[1=x;0;x<3;1;dumb[x-1]+dumb x-2]}
+q)dumb 10
+34
+q)\t dumb 30
+380
+q).memo.mkmut`dumb
+q)\t dumb 30
+1
+q).memo.rm[`dumb][27]~dumb 27
+1b
+q)/ the stupid implementation is magically hundreds of times faster
+#+end_example
+
 * pitfalls
 #+begin_example
 q)/ if passed as a literal, its new name can't be null
@@ -190,4 +207,23 @@ q).a.j1 10 11
 
 q)/ don't memoize stateful functions
 q).memo.mknew[rand;`why]
+
+q)/ be wary of .z.s
+q)megadumb:{$[1=x;0;x<3;1;.z.s[x-1]+.z.s x-2]}
+q)\t megadumb 30
+375
+q)\t .memo.mkmut[`megadumb]30
+376
+q)/ recall that .z.s produces a function literal as defined at parse-time,
+q)/ so cache lookups are not used anywhere except the bottom of the stack
+q)\t megadumb 30
+0
+q)\t megadumb 31
+601
+q)/ recursively memoize by using names
+q)dumb:{$[1=x;0;x<3;1;dumb[x-1]+dumb x-2]}
+q)\t .memo.mkmut[`dumb]31
+0
+q)megadumb[32]~dumb 32
+1b
 #+end_example
