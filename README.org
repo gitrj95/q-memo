@@ -215,7 +215,7 @@ q)\t megadumb 30
 q)\t .memo.mkmut[`megadumb]30
 376
 q)/ recall that .z.s produces a function literal as defined at parse-time,
-q)/ so cache lookups are not used anywhere except the bottom of the stack
+q)/ so cache lookups are not used anywhere except the top of the stack
 q)\t megadumb 30
 0
 q)\t megadumb 31
