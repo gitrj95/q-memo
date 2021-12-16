@@ -7,8 +7,7 @@
   seen before, and if they were, fetch the result, and if not, compute the result
   and cache it for future lookups
   - eg query steps against an hdb
-  - eg algorithms whose implementation lends naturally to recursive memoization
-    as a substitute for dynamic programming
+  - eg algorithms whose implementation lends naturally to top-down dynamic programming
 - the process of memoizing a function should be agnostic to the function,
   undoable, configurable, and easy
 - lru semantics for cache eviction
