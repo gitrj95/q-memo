@@ -6,7 +6,7 @@
   relatively small results should be memoized; ie check if the arguments were
   seen before, and if they were, fetch the result, and if not, compute the result
   and cache it for future lookups
-  - eg query steps against an hdb
+  - eg query steps against a read-only db
   - eg algorithms whose implementation lends naturally to top-down dynamic programming
 - the process of memoizing a function should be agnostic to the function,
   undoable, configurable, and easy
@@ -19,17 +19,18 @@
 | .memo.C | cache capacity. defaults to =100h=. can be any short                       |
 | .memo.P | cache table parent structure name. defaults to =`cache=. can be any symbol |
 ** functions
-| name           | description                                                                  |
-|----------------+------------------------------------------------------------------------------|
-| .memo.init     | initializes a cache table given a namespace and size                         |
-| .memo.initns   | initializes a cache table given a namespace                                  |
-| .memo.initsize | initializes a cache table given a size                                       |
-| .memo.mk       | makes a memoized copy of a function given a source, target, and cache table  |
-| .memo.mkmut    | mutates a given function into its memoized copy given a source               |
-| .memo.mknew    | makes a memoized copy of a function given a source and target                |
-| .memo.rm       | removes a memoized function and clears its cached data given a source        |
-| .memo.rs       | resizes a cache table given a cache name and size                            |
-| .memo.mv       | moves a memoized function to a new cache table given a source and cache name |
+| name          | description                                                                  |
+|---------------+------------------------------------------------------------------------------|
+| .memo.init    | initializes a cache table given a namespace and capacity                     |
+| .memo.initns  | initializes a cache table given a namespace                                  |
+| .memo.initcap | initializes a cache table given a capacity                                   |
+| .memo.mk      | makes a memoized copy of a function given a source, target, and cache table  |
+| .memo.mkmut   | mutates a given function into its memoized copy given a source               |
+| .memo.mknew   | makes a memoized copy of a function given a source and target                |
+| .memo.rm      | removes a memoized function and clears its cached data given a source        |
+| .memo.mv      | moves a memoized function to a new cache table given a source and cache name |
+| .memo.cap     | returns the capacity of a given cache table                                  |
+| .memo.rs      | resizes a cache table given a cache name and capacity                            |
 * examples
 #+begin_example
 q)/ .memo.init takes a [namespace;<short>]
@@ -40,13 +41,13 @@ q)cache
  | ::
 0| (+`f`a!(,`;,::))!+(,`r)!,,::
 
-q)/ .memo.initns is shorthand for .memo.init, using .memo.C as the cache size
+q)/ .memo.initns is shorthand for .memo.init, using .memo.C as the cache capacity
 q).memo.initns[]
 `..cache.1
 
-q)/ .memo.initsize is shorthand for .memo.init, using \d as the namespace
+q)/ .memo.initcap is shorthand for .memo.init, using \d as the namespace
 q)\d .a
-q).memo.initsize 2h
+q).memo.initcap 2h
 `.a.cache.0
 
 q)/ (::) or ` may be used to reference \d
@@ -67,19 +68,19 @@ q)g 4 5 6
 q)/ since 1 2 3 and 4 5 6 are new args, `g computes them and caches the results
 q)/ in `.a.cache.0
 q)cache.0
-f    a     | r 
+f    a     | r
 -----------| --
      ::    | ::
-.a.g ,1 2 3| 6 
+.a.g ,1 2 3| 6
 .a.g ,4 5 6| 15
 q)/ subsequent invocations with recognized arguments will fetch from
 q)/ here--instead of executing the underlying implementation
 q)g 4 5 6
 q)cache.0
-f    a     | r 
+f    a     | r
 -----------| --
      ::    | ::
-.a.g ,1 2 3| 6 
+.a.g ,1 2 3| 6
 .a.g ,4 5 6| 15
 
 q)/ .memo.mkmut is shorthand for .memo.mk, mutating the function in place and
@@ -122,45 +123,25 @@ q)g
 
 q)/ any removal of a memoized function clears its cached data
 q)cache.0
-f a | r 
+f a | r
 ----| --
   ::| ::
-#+end_example
-
-#+begin_example
-q)/ .memo.rs takes a [cache;<short>]
-q).memo.rs[`cache.1;2h]
-`.a.cache.1
-q)j1 1 2 3;j1 2 3 4;cache.1
-f     a     | r 
-------------| --
-      ::    | ::
-.a.j1 ,1 2 3| 6 
-.a.j1 ,2 3 4| 24
-
-q)/ resizing a cache to below its capacity trims it
-q).memo.rs[`cache.1;1h]
-`.a.cache.1
-q)cache.1
-f     a     | r 
-------------| --
-      ::    | ::
-.a.j1 ,2 3 4| 24
 #+end_example
 
 #+begin_example
 q)/ .memo.mv takes a [<symbol>;<symbol>] as its function and cache table,
 q)/ respectively
+q)j1 2 3 4
 q).memo.mv[`j1;`..cache.0]
 `.a.j1
 q)/ its cached data has moved
 q)cache.1
-f a | r 
+f a | r
 ----| --
   ::| ::
 q)\d .
 q)cache.0
-f     a     | r 
+f     a     | r
 ------------| --
       ::    | ::
 .a.j1 ,2 3 4| 24
@@ -168,11 +149,40 @@ q)/ and it now points to this new cache, too
 q).a.j1 5 6 7
 210
 q)cache.0
+f     a     | r
+------------| ---
+      ::    | ::
+.a.j1 ,2 3 4| 24
+.a.j1 ,5 6 7| 210
+#+end_example
+
+#+begin_example
+q)/ .memo.cap takes a [cache]
+q).memo.cap`cache.0
+2h
+q)/ in practice, you probably wouldn't want to make a cache table
+q)/ this small
+
+q)/ .memo.rs takes a [cache;<short>]
+q).memo.rs[`cache.0;10h]
+`.a.cache.1
+q).a.j1 1 2 3;.a.j1 2 3 4;cache.0
 f     a     | r  
 ------------| ---
       ::    | :: 
 .a.j1 ,2 3 4| 24 
 .a.j1 ,5 6 7| 210
+.a.j1 ,1 2 3| 6  
+
+q)/ resizing a cache to below its capacity trims it
+q).memo.rs[`cache.0;1h]
+`..cache.0
+q)cache.0
+f     a     | r
+------------| --
+      ::    | ::
+.a.j1 ,1 2 3| 6
+q)/ notice the lru semantics, here
 #+end_example
 
 #+begin_example
@@ -183,10 +193,12 @@ q)dumb:{$[1=x;0;x<3;1;dumb[x-1]+dumb x-2]}
 q)dumb 10
 34
 q)\t dumb 30
-380
-q).memo.mkmut`dumb
+497
+q)/ we want to first expand the cache capacity beyond its paltry 1h
+q).memo.rs[`cache.1;100h];.memo.mkmut`dumb
+`..dumb
 q)\t dumb 30
-1
+0
 q).memo.rm[`dumb][27]~dumb 27
 1b
 q)/ the stupid implementation is magically hundreds of times faster
@@ -196,33 +208,65 @@ q)/ the stupid implementation is magically hundreds of times faster
 #+begin_example
 q)/ if passed as a literal, its new name can't be null
 q).memo.mknew[sums;`]
-'null
+'null name
 
-q)/ don't play with the parent structure
-q)cache:10
-q)/ all memoized functions that point here will no longer work
-q).a.j1 10 11
-'0
+q)/ don't play with the parent structure, eg
+q)/ cache:10
+q)/ the library will cease to function properly
 
 q)/ don't memoize stateful functions
 q).memo.mknew[rand;`why]
+`..why
+q)count distinct why each 10#10
+1
+q)/ randomness is lost
 
 q)/ be wary of .z.s
 q)megadumb:{$[1=x;0;x<3;1;.z.s[x-1]+.z.s x-2]}
 q)\t megadumb 30
-375
+436
 q)\t .memo.mkmut[`megadumb]30
-376
+664
 q)/ recall that .z.s produces a function literal as defined at parse-time,
 q)/ so cache lookups are not used anywhere except the top of the stack
 q)\t megadumb 30
 0
 q)\t megadumb 31
-601
+766
 q)/ recursively memoize by using names
 q)dumb:{$[1=x;0;x<3;1;dumb[x-1]+dumb x-2]}
 q)\t .memo.mkmut[`dumb]31
 0
 q)megadumb[32]~dumb 32
 1b
+
+q)/ as the memo tables are global data, memoized functions that need to
+q)/ write to the cache, ie take new values, cannot run in parallel.
+q)/ if the function can be made logically concurrent, measure to be
+q)/ sure if this trade is worth it. if, however, you know that invocations
+q)/ will only read from the cache, feel free to do this in parallel
+q)0<system"s"
+1b
+q)dumb peach 10 30
+34 514229
+q)dumb peach 40 50
+'noupdate
+
+q)/ don't make the cache too small. the additional overhead incurred by
+q)/ both cache misses and constant evictions will drastically impact
+q)/ performance. this is particularly relevant in memoizing recursive
+q)/ calls with a large number of leaves
+q).memo.rs[.memo.initns[];1h]
+`..cache.2
+q).memo.mknew[.memo.rm[`dumb];`ultradumb]
+`..ultradumb
+q)\t ultradumb 30
+550
+
+q)/ don't memoize a function multiple times. there is absolutely no
+q)/ value in doing so, and its cache behavior will get complicated
+q).memo.mkmut .memo.mknew[sum;`foo]
+`..foo
+q)count string foo
+142
 #+end_example
