@@ -24,13 +24,13 @@
 | .memo.init    | initializes a cache table given a namespace and capacity                     |
 | .memo.initns  | initializes a cache table given a namespace                                  |
 | .memo.initcap | initializes a cache table given a capacity                                   |
-| .memo.mk      | makes a memoized copy of a function given a source, target, and cache table  |
+| .memo.mk      | makes a memoized copy of a function given a source, target, and cache name   |
 | .memo.mkmut   | mutates a given function into its memoized copy given a source               |
 | .memo.mknew   | makes a memoized copy of a function given a source and target                |
 | .memo.rm      | removes a memoized function and clears its cached data given a source        |
 | .memo.mv      | moves a memoized function to a new cache table given a source and cache name |
-| .memo.cap     | returns the capacity of a given cache table                                  |
-| .memo.rs      | resizes a cache table given a cache name and capacity                            |
+| .memo.cap     | returns the capacity of a cache table given a cache name                     |
+| .memo.rs      | resizes a cache table given a cache name and capacity                        |
 * examples
 #+begin_example
 q)/ .memo.init takes a [namespace;<short>]
